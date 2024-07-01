@@ -1,9 +1,9 @@
 import { create } from "zustand";
-import startSound from "/src/assets/sounds/start.wav";
-import loseSound from "/src/assets/sounds/lose.wav";
-import ballDropSound from "/src/assets/sounds/ball-drop.wav";
-import pingSound from "/src/assets/sounds/ping.mp3";
-import backgroundSound from "/src/assets/sounds/background.mp3";
+import startSound from "/assets/sounds/start.wav";
+import loseSound from "/assets/sounds/lose.wav";
+import ballDropSound from "/assets/sounds/ball-drop.wav";
+import pingSound from "/assets/sounds/ping.mp3";
+import backgroundSound from "/assets/sounds/background.mp3";
 
 const start = new Audio(startSound);
 const lose = new Audio(loseSound);
