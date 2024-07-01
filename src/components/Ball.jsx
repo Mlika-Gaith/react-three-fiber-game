@@ -22,7 +22,7 @@ function Ball() {
   }, [restart]);
 
   // Load GLB Model
-  const { nodes, materials } = useGLTF("/src/assets/3d/master_ball.glb");
+  const { nodes, materials } = useGLTF("../assets/3d/master_ball.glb");
   return (
     <group dispose={null} ref={ref}>
       <group>

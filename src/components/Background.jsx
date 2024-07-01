@@ -4,7 +4,7 @@ import { Plane, useAspect } from "@react-three/drei";
 // Background
 function Bg() {
   const video = document.createElement("video");
-  video.src = "src/assets/video/background.mp4";
+  video.src = "../assets/video/background.mp4";
   video.loop = true;
   video.muted = true;
   video.play();
