@@ -1,6 +1,6 @@
-import React, { useCallback, useLayoutEffect, useState, useMemo } from "react";
+import React, { useCallback, useLayoutEffect, useMemo } from "react";
 import { Physics, useSphere, useBox, usePlane } from "@react-three/cannon";
-import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import useGameStore from "./store";
 import { Suspense, useEffect, useRef } from "react";
 import * as THREE from "three";
@@ -47,7 +47,7 @@ function Paddle() {
   return (
     <Box receiveShadow castShadow ref={ref} args={[2.25, 0.75, 1]}>
       <a.meshStandardMaterial
-        color={impact.to([0, 1], ["#ea00d9", "#711c91"])}
+        color={impact.to([0, 1], ["#e52867", "#ea00d9"])}
       />
     </Box>
   );
@@ -160,10 +160,18 @@ function Walls() {
 }
 // Background
 function Bg() {
-  const texture = useLoader(
-    THREE.TextureLoader,
-    "src/assets/img/background.png"
-  );
+  const { gl } = useThree();
+  const video = document.createElement("video");
+  video.src = "src/assets/video/background.mp4";
+  video.loop = true;
+  video.muted = true;
+  video.play();
+
+  const texture = new THREE.VideoTexture(video);
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.format = THREE.RGBFormat;
+
   const scale = useAspect(1286, 574, 1.5);
   return <Plane scale={scale} material-map={texture} />;
 }
@@ -238,7 +246,7 @@ function Heart(props) {
         rotation={[0, 0, Math.PI]}
         scale={[0.5, 0.5, 0.5]}
         args={extrusionProps}
-        material-color="hotpink"
+        material-color="#e52867"
       />
     </group>
   );
@@ -247,6 +255,7 @@ function Heart(props) {
 // Score
 function Score() {
   const points = useGameStore((state) => state.points);
+  const hearts = useGameStore((state) => state.hearts);
   const { viewport } = useThree();
   const groupRef = useRef();
   const heartsRef = useRef();
@@ -278,10 +287,33 @@ function Score() {
         </StyledText>
       </group>
       <group ref={heartsRef}>
-        <Heart position={[0, 0, 0]} />
-        <Heart position={[-1, 0, 0]} />
-        <Heart position={[-2, 0, 0]} />
+        {[...Array(hearts)].map((_, index) => (
+          <Heart key={index} position={[-index, 0, 0]} />
+        ))}
       </group>
+    </>
+  );
+}
+
+// Game Over
+function GameOver() {
+  const ref = useRef(null);
+  const total = useGameStore((state) => state.totalScore);
+  useFrame((state) => {
+    const s = 1 + 0.01 * (1 + Math.sin(state.clock.getElapsedTime() * 2)) * 2;
+    if (ref.current) ref.current.scale.set(s, s, s);
+  });
+  return (
+    <>
+      <StyledText position={[0, -3.5, 1]} ref={ref} fontSize={1.5}>
+        Total Score: {total}
+      </StyledText>
+      <StyledText position={[0, -1.5, 1]} ref={ref} fontSize={1.5}>
+        Click To Start
+      </StyledText>
+      <StyledText position={[0, 0.5, 1]} ref={ref} fontSize={1.5}>
+        Game Over
+      </StyledText>
     </>
   );
 }
@@ -301,9 +333,10 @@ function Perspective() {
 export default function App() {
   const startup = useGameStore((state) => state.startup);
   const start = useGameStore((state) => state.start);
+  const hearts = useGameStore((state) => state.hearts);
 
   return (
-    <div onClick={start} className="bg-red-500">
+    <div onClick={start}>
       <Canvas
         shadows
         gl={{ antialias: false, alpha: false }}
@@ -313,7 +346,7 @@ export default function App() {
         <ambientLight intensity={0.1} />
         <directionalLight castShadow position={[10, 10, 5]} />
         <pointLight position={[-10, -10, -10]} />
-        {!startup && (
+        {!startup && hearts > 0 && (
           <Physics
             defaultContactMaterial={{
               restitution: 1.07,
@@ -328,6 +361,7 @@ export default function App() {
           </Physics>
         )}
         {startup && <Startup />}
+        {hearts === 0 && <GameOver />}
         <Score />
         <Suspense fallback={null}>
           <Bg />
