@@ -13,13 +13,9 @@ html,
   @apply size-full m-0 p-0 select-none overflow-hidden;
 }
 
-#root {
-  @apply overflow-auto;
-}
-
 body {
   image-rendering: pixelated;
-  @apply fixed overflow-hidden overscroll-y-none font-play-fair text-black bg-[#272730] cursor-pointer;
+  @apply fixed overflow-hidden overscroll-y-none font-play-fair text-black bg-[#272730] cursor-custom;
 }
 
 .startup {

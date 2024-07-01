@@ -1,10 +1,17 @@
-import React, { useCallback, useLayoutEffect } from "react";
+import React, { useCallback, useLayoutEffect, useState, useMemo } from "react";
 import { Physics, useSphere, useBox, usePlane } from "@react-three/cannon";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import useGameStore from "./store";
 import { Suspense, useEffect, useRef } from "react";
 import * as THREE from "three";
-import { Plane, useAspect, Text, useGLTF, Box } from "@react-three/drei";
+import {
+  Plane,
+  useAspect,
+  Text,
+  useGLTF,
+  Box,
+  Extrude,
+} from "@react-three/drei";
 import { a, useSpring } from "@react-spring/three";
 import "./App.css";
 
@@ -196,6 +203,7 @@ const StyledText = React.forwardRef(
   }
 );
 StyledText.displayName = "StyledText";
+
 // Startup
 function Startup() {
   const ref = useRef(null);
@@ -207,6 +215,74 @@ function Startup() {
     <StyledText position={[0, 0.5, 1]} ref={ref} fontSize={1.5}>
       Click To Start
     </StyledText>
+  );
+}
+
+// Heart Shape
+function Heart(props) {
+  const extrusionProps = useMemo(() => {
+    const heartShape = new THREE.Shape();
+    heartShape.moveTo(0.25, 0.25);
+    heartShape.bezierCurveTo(0.25, 0.25, 0.2, 0, 0, 0);
+    heartShape.bezierCurveTo(-0.3, 0, -0.3, 0.35, -0.3, 0.35);
+    heartShape.bezierCurveTo(-0.3, 0.55, -0.1, 0.77, 0.25, 0.95);
+    heartShape.bezierCurveTo(0.6, 0.77, 0.8, 0.55, 0.8, 0.35);
+    heartShape.bezierCurveTo(0.8, 0.35, 0.8, 0, 0.5, 0);
+    heartShape.bezierCurveTo(0.35, 0, 0.25, 0.25, 0.25, 0.25);
+    return [heartShape, { depth: 0, bevelEnabled: false }];
+  }, []);
+  return (
+    <group {...props}>
+      <Extrude
+        position={[0.125, 0.2, 0]}
+        rotation={[0, 0, Math.PI]}
+        scale={[0.5, 0.5, 0.5]}
+        args={extrusionProps}
+        material-color="hotpink"
+      />
+    </group>
+  );
+}
+
+// Score
+function Score() {
+  const points = useGameStore((state) => state.points);
+  const { viewport } = useThree();
+  const groupRef = useRef();
+  const heartsRef = useRef();
+
+  useLayoutEffect(() => {
+    const { width, height } = viewport.getCurrentViewport();
+    if (groupRef.current && heartsRef.current) {
+      groupRef.current.position.set(-width / 2 + 6.5, height / 2 - 1.5, 3.5);
+      heartsRef.current.position.set(width / 2 - 6.5, height / 2 - 1.5, 3.5);
+
+      // Set initial scale to make them bigger
+      const scale = 1.15; // Adjust scale as needed
+      groupRef.current.scale.set(scale, scale, scale);
+      heartsRef.current.scale.set(scale, scale, scale);
+    }
+  }, [viewport]);
+
+  return (
+    <>
+      <group ref={groupRef}>
+        <StyledText
+          position={[0, 0, 0]}
+          fontSize={0.75}
+          anchorX="left"
+          anchorY="middle"
+          offset={0.1}
+        >
+          {String(points)}
+        </StyledText>
+      </group>
+      <group ref={heartsRef}>
+        <Heart position={[0, 0, 0]} />
+        <Heart position={[-1, 0, 0]} />
+        <Heart position={[-2, 0, 0]} />
+      </group>
+    </>
   );
 }
 
@@ -222,18 +298,19 @@ function Perspective() {
   });
 }
 
-function App() {
+export default function App() {
   const startup = useGameStore((state) => state.startup);
   const start = useGameStore((state) => state.start);
+
   return (
-    <div onClick={start}>
+    <div onClick={start} className="bg-red-500">
       <Canvas
         shadows
         gl={{ antialias: false, alpha: false }}
         dpr={0.25}
         camera={{ position: [0, 5, 12], fov: 50 }}
       >
-        <ambientLight intensity={0.8} />
+        <ambientLight intensity={0.1} />
         <directionalLight castShadow position={[10, 10, 5]} />
         <pointLight position={[-10, -10, -10]} />
         {!startup && (
@@ -251,6 +328,7 @@ function App() {
           </Physics>
         )}
         {startup && <Startup />}
+        <Score />
         <Suspense fallback={null}>
           <Bg />
         </Suspense>
@@ -259,5 +337,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
